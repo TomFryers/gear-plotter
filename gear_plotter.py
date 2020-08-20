@@ -1,6 +1,6 @@
+import itertools
 import math
 from dataclasses import dataclass
-import itertools
 
 import pygame
 
