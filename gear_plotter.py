@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+A tool that generates a chart comparing the gears of several bikes.
+"""
+import argparse
 import itertools
 import math
 from dataclasses import dataclass
@@ -92,9 +97,8 @@ class Bike:
         return sorted(self.rear, reverse=True).index(value)
 
 
-def load_bikes(filename):
-    with open(filename) as f:
-        data = f.read().splitlines()
+def load_bikes(file_obj):
+    data = file_obj.read().splitlines()
     bikes = []
     current_data = {}
     for row in data:
@@ -138,7 +142,7 @@ def to_x(width, value, max_value):
     return math.log(value) / math.log(max_value) * width * 0.95 + 0.02
 
 
-def main():
+def show(bikes):
     pygame.init()
     FONTFL = pygame.font.Font(None, round(DRAWSIZE[1] * 0.04))
     FONTFM = pygame.font.Font(None, round(DRAWSIZE[1] * 0.02))
@@ -146,7 +150,6 @@ def main():
     pygame.display.set_caption("Gears")
 
     image = pygame.Surface(DRAWSIZE)
-    bikes = load_bikes("gears.txt")
     ratios = [b.get_gain_ratios() for b in bikes]
     max_ratio = max(max(x) for x in ratios)[0]
     # Draw lines
@@ -247,6 +250,16 @@ def main():
                 break
         pygame.display.flip()
         clock.tick(60)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "bikes", metavar="bikes", type=argparse.FileType("r"), help="bikes data"
+    )
+    args = parser.parse_args()
+    bikes = load_bikes(args.bikes)
+    show(bikes)
 
 
 if __name__ == "__main__":
