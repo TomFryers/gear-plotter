@@ -130,19 +130,13 @@ def load_bikes(file_obj):
     return bikes
 
 
-SIZE = (1920, 1080)
-AA = 16
-
-DRAWSIZE = (SIZE[0] * AA, SIZE[1] * AA)
-
-RADIUS = DRAWSIZE[1] * 0.01
-
-
 def to_x(width, value, max_value):
     return math.log(value) / math.log(max_value) * width * 0.95 + 0.02
 
 
-def show(bikes):
+def show(SIZE, AA, bikes, image_file=None):
+    DRAWSIZE = (SIZE[0] * AA, SIZE[1] * AA)
+    RADIUS = DRAWSIZE[1] * 0.01
     pygame.init()
     FONTFL = pygame.font.Font(None, round(DRAWSIZE[1] * 0.04))
     FONTFM = pygame.font.Font(None, round(DRAWSIZE[1] * 0.02))
@@ -240,7 +234,12 @@ def show(bikes):
         image.blit(
             label, (round(DRAWSIZE[1] * 0.02), round(y - label.get_height() / 2)),
         )
-    S.blit(pygame.transform.smoothscale(image, SIZE), (0, 0))
+    if AA == 1:
+        S = image
+    else:
+        S.blit(pygame.transform.smoothscale(image, SIZE), (0, 0))
+    if image_file is not None:
+        pygame.image.save(S, image_file.name)
     ext = False
     clock = pygame.time.Clock()
     while not ext:
@@ -255,11 +254,31 @@ def show(bikes):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "bikes", metavar="bikes", type=argparse.FileType("r"), help="bikes data"
+        "bikes", type=argparse.FileType("r"), help="bike gears data file"
+    )
+    parser.add_argument("-x", "--width", type=int, help="window width", default=1280)
+    parser.add_argument("-y", "--height", type=int, help="window height", default=720)
+    parser.add_argument(
+        "-s",
+        "--supersampling",
+        type=int,
+        help="amount of supersamping antialiasing to use",
+        default=16,
+    )
+    parser.add_argument(
+        "-o",
+        "--output-image",
+        type=argparse.FileType("wb"),
+        help="image file to output to",
     )
     args = parser.parse_args()
     bikes = load_bikes(args.bikes)
-    show(bikes)
+    show(
+        (args.width, args.height),
+        args.supersampling,
+        bikes,
+        image_file=args.output_image,
+    )
 
 
 if __name__ == "__main__":
