@@ -22,11 +22,12 @@ The following length units are supported:
 - ft
 - in
 
-In order to determine the wheel size, one of the following should be given:
+In order to determine the wheel size, one of the following should be
+given:
 
-- wheel_radius
-- wheel_diameter
-- tyre_thickness
-- full_diameter
-- full_circumference
-- full_radius
+- `full_diameter`
+- `full_circumference`
+- `full_radius`
+
+or `tyre_thickness` should be given, along with either `wheel_radius` or
+`wheel_diameter`.
