@@ -76,7 +76,7 @@ class Bike:
     name: str
     front: list
     rear: list
-    full_radius: Length(600, "mm")
+    full_radius: Length(700, "mm")
     crank: Length = Length(172.5, "mm")
 
     def get_gain_ratios(self):
@@ -196,7 +196,7 @@ def show(SIZE, AA, bikes, image_file=None):
             this_y = y + DRAWSIZE[1] * 0.03 * front_diff
             x = to_x(DRAWSIZE[0], ratio, max_ratio)
             drawpos = (round(x), round(this_y))
-            if (len(bike.rear) - 1) * 0.17 > abs(rear_diff) * abs(
+            if (len(bike.rear) - 1) * 0.25 > abs(rear_diff) * abs(
                 front_diff
             ) or rear_diff * front_diff >= 0:
                 pygame.draw.circle(image, (200, 200, 200), drawpos, round(RADIUS))
