@@ -234,10 +234,7 @@ def show(SIZE, AA, bikes, image_file=None):
         image.blit(
             label, (round(DRAWSIZE[1] * 0.02), round(y - label.get_height() / 2)),
         )
-    if AA == 1:
-        S = image
-    else:
-        S.blit(pygame.transform.smoothscale(image, SIZE), (0, 0))
+    S.blit(image if AA == 1 else pygame.transform.smoothscale(image, SIZE), (0, 0))
     if image_file is not None:
         pygame.image.save(S, image_file.name)
     ext = False
