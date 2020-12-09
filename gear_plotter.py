@@ -252,7 +252,7 @@ def show(size, aa, bikes, image_file=None):
                 ext = True
                 break
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick(20)
 
 
 def main():
