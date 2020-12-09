@@ -81,7 +81,7 @@ class Bike:
     name: str
     front: list
     rear: list
-    full_radius: Length(700, "mm")
+    full_radius: Length = Length(700, "mm")
     crank: Length = Length(172.5, "mm")
 
     def get_gain_ratios(self):
@@ -103,6 +103,7 @@ class Bike:
 
 
 def load_bikes(file_obj):
+    """Generate a list of bikes by parsing a file."""
     bikes = []
     current_data = {}
     for row in file_obj:
@@ -141,10 +142,15 @@ def to_x(width, value, max_value):
 
 def show(size, aa, bikes, image_file=None):
     draw_size = (size[0] * aa, size[1] * aa)
-    radius = draw_size[1] * 0.01
+
+    def p(x) -> int:
+        """Convert from percent of total height to pixels."""
+        return round(draw_size[1] * x / 100)
+
+    radius = p(1)
     pygame.init()
-    label_font = pygame.font.Font(None, round(draw_size[1] * 0.04))
-    name_font = pygame.font.Font(None, round(draw_size[1] * 0.02))
+    label_font = pygame.font.Font(None, p(4))
+    name_font = pygame.font.Font(None, p(2))
     S = pygame.display.set_mode(size)
     pygame.display.set_caption("Gears")
 
@@ -158,37 +164,15 @@ def show(size, aa, bikes, image_file=None):
         x = to_x(draw_size[0], i, max_ratio)
         if x > draw_size[0] * 1.1:
             break
+
+        thickness = p((0.03 if i % 0.5 else 0.1 if i % 1 else 0.3))
+        pygame.draw.line(
+            image, LINE_COLOUR, (round(x), 0), (round(x), draw_size[1]), thickness
+        )
         if not i % 1:
-            pygame.draw.line(
-                image,
-                LINE_COLOUR,
-                (round(x), 0),
-                (round(x), draw_size[1]),
-                round(draw_size[1] * 0.003),
-            )
             label = label_font.render(str(round(i)), True, LINE_COLOUR)
             image.blit(
-                label,
-                (
-                    round(x - label.get_width() - draw_size[1] * 0.003),
-                    round(draw_size[1] * 0.01),
-                ),
-            )
-        elif not i % 0.5:
-            pygame.draw.line(
-                image,
-                LINE_COLOUR,
-                (round(x), 0),
-                (round(x), draw_size[1]),
-                round(draw_size[1] * 0.001),
-            )
-        else:
-            pygame.draw.line(
-                image,
-                LINE_COLOUR,
-                (round(x), 0),
-                (round(x), draw_size[1]),
-                round(draw_size[1] * 0.0003),
+                label, (round(x - label.get_width() - draw_size[1] * 0.003), p(1))
             )
 
     # Draw bikes
@@ -202,18 +186,12 @@ def show(size, aa, bikes, image_file=None):
             this_y = y + draw_size[1] * 0.03 * front_diff
             x = to_x(draw_size[0], ratio, max_ratio)
             drawpos = (round(x), round(this_y))
-            if (len(bike.rear) - 1) * 0.25 > abs(rear_diff) * abs(
+            is_gear_bad = (len(bike.rear) - 1) * 0.25 <= abs(rear_diff) * abs(
                 front_diff
-            ) or rear_diff * front_diff >= 0:
-                pygame.draw.circle(image, BLOB_COLOUR, drawpos, round(radius))
-            else:
-                pygame.draw.circle(
-                    image,
-                    BLOB_COLOUR,
-                    drawpos,
-                    round(radius),
-                    round(draw_size[1] * 0.002),
-                )
+            ) and rear_diff * front_diff < 0
+            pygame.draw.circle(
+                image, BLOB_COLOUR, drawpos, round(radius), is_gear_bad * p(0.2)
+            )
 
             label = name_font.render(
                 f"{gears[0]}–{gears[1]}" if len(bike.front) > 1 else str(gears[1]),
@@ -237,10 +215,7 @@ def show(size, aa, bikes, image_file=None):
             )
             image.blit(label, (round(x - label.get_width() / 2), round(text_y)))
         label = label_font.render(bike.name, True, LABEL_COLOUR)
-        image.blit(
-            label,
-            (round(draw_size[1] * 0.02), round(y - label.get_height() / 2)),
-        )
+        image.blit(label, (p(2), round(y - label.get_height() / 2)))
     S.blit(image if aa == 1 else pygame.transform.smoothscale(image, size), (0, 0))
     if image_file is not None:
         pygame.image.save(S, image_file.name)
