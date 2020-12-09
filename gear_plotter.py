@@ -19,6 +19,11 @@ UNITS = {
     "in": 0.0254,
 }
 
+BACK_COLOUR = (0, 0, 0)
+LINE_COLOUR = (119, 119, 119)
+BLOB_COLOUR = (200, 200, 200)
+LABEL_COLOUR = (255, 255, 255)
+
 
 class Length(float):
     def __new__(cls, value, unit="mm"):
@@ -98,10 +103,10 @@ class Bike:
 
 
 def load_bikes(file_obj):
-    data = file_obj.read().splitlines()
     bikes = []
     current_data = {}
-    for row in data:
+    for row in file_obj:
+        row = row.strip()
         if row[0] == "#":
             if current_data:
                 bikes.append(Bike(**get_full_radius(current_data)))
@@ -134,85 +139,86 @@ def to_x(width, value, max_value):
     return math.log(value) / math.log(max_value) * width * 0.95 + 0.02
 
 
-def show(SIZE, AA, bikes, image_file=None):
-    DRAWSIZE = (SIZE[0] * AA, SIZE[1] * AA)
-    RADIUS = DRAWSIZE[1] * 0.01
+def show(size, aa, bikes, image_file=None):
+    draw_size = (size[0] * aa, size[1] * aa)
+    radius = draw_size[1] * 0.01
     pygame.init()
-    FONTFL = pygame.font.Font(None, round(DRAWSIZE[1] * 0.04))
-    FONTFM = pygame.font.Font(None, round(DRAWSIZE[1] * 0.02))
-    S = pygame.display.set_mode(SIZE)
+    label_font = pygame.font.Font(None, round(draw_size[1] * 0.04))
+    name_font = pygame.font.Font(None, round(draw_size[1] * 0.02))
+    S = pygame.display.set_mode(size)
     pygame.display.set_caption("Gears")
 
-    image = pygame.Surface(DRAWSIZE)
+    image = pygame.Surface(draw_size)
+    image.fill(BACK_COLOUR)
     ratios = [b.get_gain_ratios() for b in bikes]
     max_ratio = max(max(x) for x in ratios)[0]
     # Draw lines
     for i in range(1, 200):
         i /= 10
-        x = to_x(DRAWSIZE[0], i, max_ratio)
-        if x > DRAWSIZE[0] * 1.1:
+        x = to_x(draw_size[0], i, max_ratio)
+        if x > draw_size[0] * 1.1:
             break
         if not i % 1:
             pygame.draw.line(
                 image,
-                (127, 127, 127),
+                LINE_COLOUR,
                 (round(x), 0),
-                (round(x), DRAWSIZE[1]),
-                round(DRAWSIZE[1] * 0.003),
+                (round(x), draw_size[1]),
+                round(draw_size[1] * 0.003),
             )
-            label = FONTFL.render(str(round(i)), True, (127, 127, 127))
+            label = label_font.render(str(round(i)), True, LINE_COLOUR)
             image.blit(
                 label,
                 (
-                    round(x - label.get_width() - DRAWSIZE[1] * 0.003),
-                    round(DRAWSIZE[1] * 0.01),
+                    round(x - label.get_width() - draw_size[1] * 0.003),
+                    round(draw_size[1] * 0.01),
                 ),
             )
         elif not i % 0.5:
             pygame.draw.line(
                 image,
-                (119, 127, 127),
+                LINE_COLOUR,
                 (round(x), 0),
-                (round(x), DRAWSIZE[1]),
-                round(DRAWSIZE[1] * 0.001),
+                (round(x), draw_size[1]),
+                round(draw_size[1] * 0.001),
             )
         else:
             pygame.draw.line(
                 image,
-                (119, 127, 127),
+                LINE_COLOUR,
                 (round(x), 0),
-                (round(x), DRAWSIZE[1]),
-                round(DRAWSIZE[1] * 0.0003),
+                (round(x), draw_size[1]),
+                round(draw_size[1] * 0.0003),
             )
 
     # Draw bikes
     for index, (bike, ratio_list) in enumerate(zip(bikes, ratios)):
-        y = DRAWSIZE[1] * (index + 1) / (len(bikes) + 1)
+        y = draw_size[1] * (index + 1) / (len(bikes) + 1)
         position = 1
         forced_pos = True
         for ratio, gears in ratio_list:
             front_diff = gears[0] - len(bike.front) / 2 - 0.5
             rear_diff = gears[1] - len(bike.rear) / 2 - 0.5
-            this_y = y + DRAWSIZE[1] * 0.03 * front_diff
-            x = to_x(DRAWSIZE[0], ratio, max_ratio)
+            this_y = y + draw_size[1] * 0.03 * front_diff
+            x = to_x(draw_size[0], ratio, max_ratio)
             drawpos = (round(x), round(this_y))
             if (len(bike.rear) - 1) * 0.25 > abs(rear_diff) * abs(
                 front_diff
             ) or rear_diff * front_diff >= 0:
-                pygame.draw.circle(image, (200, 200, 200), drawpos, round(RADIUS))
+                pygame.draw.circle(image, BLOB_COLOUR, drawpos, round(radius))
             else:
                 pygame.draw.circle(
                     image,
-                    (200, 200, 200),
+                    BLOB_COLOUR,
                     drawpos,
-                    round(RADIUS),
-                    round(DRAWSIZE[1] * 0.002),
+                    round(radius),
+                    round(draw_size[1] * 0.002),
                 )
 
-            label = FONTFM.render(
+            label = name_font.render(
                 f"{gears[0]}–{gears[1]}" if len(bike.front) > 1 else str(gears[1]),
                 True,
-                (255, 255, 255),
+                LABEL_COLOUR,
             )
             if gears[0] > len(bike.front) / 2 + 0.5:
                 position = 1
@@ -227,14 +233,15 @@ def show(SIZE, AA, bikes, image_file=None):
             text_y = (
                 this_y
                 - label.get_height() / 2
-                + position * (label.get_height() / 2 + RADIUS * 1.1)
+                + position * (label.get_height() / 2 + radius * 1.1)
             )
             image.blit(label, (round(x - label.get_width() / 2), round(text_y)))
-        label = FONTFL.render(bike.name, True, (255, 255, 255))
+        label = label_font.render(bike.name, True, LABEL_COLOUR)
         image.blit(
-            label, (round(DRAWSIZE[1] * 0.02), round(y - label.get_height() / 2)),
+            label,
+            (round(draw_size[1] * 0.02), round(y - label.get_height() / 2)),
         )
-    S.blit(image if AA == 1 else pygame.transform.smoothscale(image, SIZE), (0, 0))
+    S.blit(image if aa == 1 else pygame.transform.smoothscale(image, size), (0, 0))
     if image_file is not None:
         pygame.image.save(S, image_file.name)
     ext = False
